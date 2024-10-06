@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,22 +41,39 @@ public class QueueController {
     }
 
     @PostMapping("/register/patientE")
-    public ResponseEntity<?> registerPatientE(@RequestBody Row5 patient) {
+    public ResponseEntity<?> registerPatientE() {
         LocalDateTime currentDateTime = LocalDateTime.now();
 
+        // Get the next patient number
+        Integer maxPatientNumber = row5Repository.findMaxPatientNumber();
+        int nextNumber = maxPatientNumber + 1;
+
+        // Create patient ID
+        String patientId = "E" + nextNumber;
+
+        // Create and save Row5 patient
+        Row5 patient = new Row5();
+        patient.setPatientId(patientId);
+        patient.setPatientNumber(nextNumber);
         patient.setInQueue(true);
         patient.setRegisteredTime(currentDateTime);
         Row5 savedPatient = row5Repository.save(patient);
 
+        // Create and save RegistrationStation
         RegistrationStation registration = new RegistrationStation();
-        registration.setPatientId(patient.getPatientId());
+        registration.setPatientId(patientId);
         registration.setSectionNumber(5);
         registration.setRegisteredTime(currentDateTime);
-
         RegistrationStation savedRegistration = registrationStationRepository.save(registration);
 
-        return ResponseEntity.ok(savedRegistration.getRegisteredSequence());
+        // Create response object
+        Map<String, Object> response = new HashMap<>();
+        response.put("patientId", patientId);
+        response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+
+        return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/row5")
     public ResponseEntity<?> getRow5Queue() {
