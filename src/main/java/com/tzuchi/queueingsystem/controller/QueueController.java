@@ -22,18 +22,52 @@ public class QueueController {
 
     @PostMapping("/register/row2-patient")
     public ResponseEntity<?> registerRow2Patient(@RequestBody Row2 patient, @RequestParam String date) {
-        patient.setInQueue(true);
-        Row2 savedPatient = row2Repository.save(patient);
+        try {
+            patient.setInQueue(true);
 
-        RegistrationStation registration = new RegistrationStation();
-        registration.setPatientId(patient.getPatientId());
-        registration.setSectionNumber(2);
-        registration.setRegisteredTime(LocalDateTime.parse(date + "T00:00:00"));
+            // Set a default patient category if it's not provided
+            if (patient.getPatientCategory() == null) {
+                patient.setPatientCategory('D');  // 'D' for Default, or any other appropriate default character
+            }
 
-        RegistrationStation savedRegistration = registrationStationRepository.save(registration);
+            // Set other required fields if they're not already set
+            if (patient.getPriority() == null) {
+                patient.setPriority(Row2.Priority.LOW);
+            }
+            if (patient.getSectionNumber() == null) {
+                patient.setSectionNumber(2);
+            }
 
-        return ResponseEntity.ok(savedRegistration.getRegisteredSequence());
+            // Generate and set the patient number
+            if (patient.getPatientNumber() == null) {
+                Integer maxPatientNumber = row2Repository.findMaxPatientNumber();
+                int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
+                patient.setPatientNumber(nextNumber);
+            }
+
+            // Generate patient ID if not provided
+            if (patient.getPatientId() == null) {
+                String patientId = String.valueOf(patient.getPatientCategory()) + String.valueOf(patient.getPatientNumber());
+                patient.setPatientId(patientId);
+            }
+
+            Row2 savedPatient = row2Repository.save(patient);
+
+            RegistrationStation registration = new RegistrationStation();
+            registration.setPatientId(savedPatient.getPatientId());
+            registration.setSectionNumber(savedPatient.getSectionNumber());
+            registration.setRegisteredTime(LocalDateTime.parse(date + "T00:00:00"));
+
+            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
+
+            return ResponseEntity.ok(savedRegistration.getRegisteredSequence());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("An error occurred while registering the patient: " + e.getMessage());
+        }
     }
+
 
     @GetMapping("/row2")
     public ResponseEntity<?> getRow2Queue() {
@@ -81,18 +115,43 @@ public class QueueController {
     }
 
     @PostMapping("/register/patientD")
-    public ResponseEntity<?> registerPatientD(@RequestBody Row8 patient, @RequestParam String date) {
-        patient.setInQueue(true);
-        Row8 savedPatient = row8Repository.save(patient);
+    public ResponseEntity<?> registerPatientD(@RequestParam String date) {
+        try {
+            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
 
-        RegistrationStation registration = new RegistrationStation();
-        registration.setPatientId(patient.getPatientId());
-        registration.setSectionNumber(8);
-        registration.setRegisteredTime(LocalDateTime.parse(date + "T00:00:00"));
+            // Get the next patient number
+            Integer maxPatientNumber = row8Repository.findMaxPatientNumber();
+            int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
 
-        RegistrationStation savedRegistration = registrationStationRepository.save(registration);
+            // Create patient ID
+            String patientId = "D" + nextNumber;
 
-        return ResponseEntity.ok(savedRegistration.getRegisteredSequence());
+            // Create and save Row8 patient
+            Row8 patient = new Row8();
+            patient.setPatientId(patientId);
+            patient.setPatientNumber(nextNumber);
+            patient.setInQueue(true);
+            patient.setRegisteredTime(currentDateTime);
+            Row8 savedPatient = row8Repository.save(patient);
+
+            // Create and save RegistrationStation
+            RegistrationStation registration = new RegistrationStation();
+            registration.setPatientId(patientId);
+            registration.setSectionNumber(8);
+            registration.setRegisteredTime(currentDateTime);
+            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
+
+            // Create response object
+            Map<String, Object> response = new HashMap<>();
+            response.put("patientId", patientId);
+            response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("An error occurred while registering the patient: " + e.getMessage());
+        }
     }
 
     @GetMapping("/row8")
@@ -127,15 +186,45 @@ public class QueueController {
         return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/call/nextB")
-    public ResponseEntity<?> callNextB() {
-        Row6 patient = row6Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
-        if (patient != null) {
-            return ResponseEntity.ok(patient.getPatientId());
-        }
-        return ResponseEntity.notFound().build();
-    }
+    @PostMapping("/register/patientB")
+    public ResponseEntity<?> registerPatientB(@RequestParam String date) {
+        try {
+            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
 
+            // Get the next patient number
+            Integer maxPatientNumber = row6Repository.findMaxPatientNumber();
+            int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
+
+            // Create patient ID
+            String patientId = "B" + nextNumber;
+
+            // Create and save Row6 patient
+            Row6 patient = new Row6();
+            patient.setPatientId(patientId);
+            patient.setPatientNumber(nextNumber);
+            patient.setInQueue(true);
+            patient.setRegisteredTime(currentDateTime);
+            Row6 savedPatient = row6Repository.save(patient);
+
+            // Create and save RegistrationStation
+            RegistrationStation registration = new RegistrationStation();
+            registration.setPatientId(patientId);
+            registration.setSectionNumber(6);
+            registration.setRegisteredTime(currentDateTime);
+            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
+
+            // Create response object
+            Map<String, Object> response = new HashMap<>();
+            response.put("patientId", patientId);
+            response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("An error occurred while registering the patient: " + e.getMessage());
+        }
+    }
     @GetMapping("/get/allRegister")
     public ResponseEntity<?> getAllRegistrations() {
         return ResponseEntity.ok(registrationStationRepository.findAll());
@@ -185,3 +274,4 @@ public class QueueController {
         return ResponseEntity.notFound().build();
     }
 }
+
