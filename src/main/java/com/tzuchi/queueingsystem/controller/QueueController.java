@@ -44,8 +44,8 @@ public class QueueController {
                     return ResponseEntity.badRequest().body(Map.of("error", "Invalid patient category"));
             }
 
-            // Generate and set the patient number
-            Integer maxPatientNumber = row2Repository.findMaxPatientNumber();
+            // Generate and set the patient number based on category
+            Integer maxPatientNumber = row2Repository.findMaxPatientNumberByCategory(patient.getPatientCategory());
             int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
             patient.setPatientNumber(nextNumber);
 
