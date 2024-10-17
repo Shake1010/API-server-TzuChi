@@ -5,9 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface Row6Repository extends JpaRepository<Row6, String> {
     Row6 findFirstByInQueueTrueOrderByPatientNumberAsc();
+
     @Query("SELECT MAX(r.patientNumber) FROM Row6 r")
     Integer findMaxPatientNumber();
+
+    List<Row6> findAllByInQueueTrue();
 }

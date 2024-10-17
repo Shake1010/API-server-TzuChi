@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+
+
 
 @RestController
 @RequiredArgsConstructor
@@ -80,9 +83,23 @@ public class QueueController {
     }
 
 
+
     @GetMapping("/row2")
     public ResponseEntity<?> getRow2Queue() {
-        return ResponseEntity.ok(row2Repository.findAll());
+        List<Row2> queue = row2Repository.findAllByInQueueTrue();
+        Map<String, Object> response = new HashMap<>();
+        response.put("sectionNumber", 2);
+        response.put("patients", queue);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/row5")
+    public ResponseEntity<?> getRow5Queue() {
+        List<Row5> queue = row5Repository.findAllByInQueueTrue();
+        Map<String, Object> response = new HashMap<>();
+        response.put("sectionNumber", 5);
+        response.put("patients", queue);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register/patientE")
@@ -128,9 +145,13 @@ public class QueueController {
     }
 
 
-    @GetMapping("/row5")
-    public ResponseEntity<?> getRow5Queue() {
-        return ResponseEntity.ok(row5Repository.findAll());
+    @GetMapping("/row6")
+    public ResponseEntity<?> getRow6Queue() {
+        List<Row6> queue = row6Repository.findAllByInQueueTrue();
+        Map<String, Object> response = new HashMap<>();
+        response.put("sectionNumber", 6);
+        response.put("patients", queue);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register/patientD")
@@ -175,7 +196,11 @@ public class QueueController {
 
     @GetMapping("/row8")
     public ResponseEntity<?> getRow8Queue() {
-        return ResponseEntity.ok(row8Repository.findAll());
+        List<Row8> queue = row8Repository.findAllByInQueueTrue();
+        Map<String, Object> response = new HashMap<>();
+        response.put("sectionNumber", 8);
+        response.put("patients", queue);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/call/highest")
