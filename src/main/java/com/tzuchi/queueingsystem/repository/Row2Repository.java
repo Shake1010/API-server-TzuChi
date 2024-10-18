@@ -16,4 +16,7 @@ public interface Row2Repository extends JpaRepository<Row2, String> {
     Integer findMaxPatientNumberByCategory(@Param("category") char category);
 
     List<Row2> findAllByInQueueTrue();
+
+    // Updated method to use the correct field name
+    List<Row2> findAllByInQueueTrueOrderByRegisteredTimeAsc();
 }

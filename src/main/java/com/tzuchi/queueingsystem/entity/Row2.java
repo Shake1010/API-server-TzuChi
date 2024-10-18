@@ -2,23 +2,27 @@ package com.tzuchi.queueingsystem.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
 @Table(name = "row2")
 public class Row2 {
     @Id
     private String patientId;
 
-    private Character patientCategory;
     private Integer patientNumber;
-    private Integer sectionNumber;
-    private Boolean inQueue;
-
-    @Enumerated(EnumType.STRING)
+    private Character patientCategory;
+    private boolean inQueue;
     private Priority priority;
 
+    @Column(name = "registered_time")
+    private LocalDateTime registeredTime;
+
+    @Column(name = "section_number")
+    private Integer sectionNumber;
+
     public enum Priority {
-        LOW, MID, HIGH
+        HIGH, MID, LOW
     }
 }

@@ -52,27 +52,21 @@ public class QueueController {
             int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
             patient.setPatientNumber(nextNumber);
 
-            // Generate patient ID
+            // Generate and set patient ID
             String patientId = String.valueOf(patient.getPatientCategory()) + nextNumber;
             patient.setPatientId(patientId);
 
             // Set other required fields
             patient.setInQueue(true);
             patient.setSectionNumber(2);
+            patient.setRegisteredTime(currentDateTime);
 
             Row2 savedPatient = row2Repository.save(patient);
 
-            RegistrationStation registration = new RegistrationStation();
-            registration.setPatientId(savedPatient.getPatientId());
-            registration.setSectionNumber(savedPatient.getSectionNumber());
-            registration.setRegisteredTime(currentDateTime);
-
-            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
-
             // Create response object
             Map<String, Object> response = new HashMap<>();
-            response.put("patientId", patientId);
-            response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+            response.put("patientId", savedPatient.getPatientId());
+            response.put("registeredSequence", savedPatient.getPatientNumber());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -82,16 +76,18 @@ public class QueueController {
         }
     }
 
-
+    // ... other methods
 
     @GetMapping("/row2")
     public ResponseEntity<?> getRow2Queue() {
-        List<Row2> queue = row2Repository.findAllByInQueueTrue();
+        var queue = row2Repository.findAllByInQueueTrueOrderByRegisteredTimeAsc();
         Map<String, Object> response = new HashMap<>();
         response.put("sectionNumber", 2);
         response.put("patients", queue);
         return ResponseEntity.ok(response);
     }
+
+
 
     @GetMapping("/row5")
     public ResponseEntity<?> getRow5Queue() {
@@ -99,6 +95,9 @@ public class QueueController {
         Map<String, Object> response = new HashMap<>();
         response.put("sectionNumber", 5);
         response.put("patients", queue);
+
+        System.out.println("API Response for /row5: " + response);
+
         return ResponseEntity.ok(response);
     }
 
@@ -151,6 +150,9 @@ public class QueueController {
         Map<String, Object> response = new HashMap<>();
         response.put("sectionNumber", 6);
         response.put("patients", queue);
+
+        System.out.println("API Response for /row6: " + response);
+
         return ResponseEntity.ok(response);
     }
 
@@ -200,6 +202,10 @@ public class QueueController {
         Map<String, Object> response = new HashMap<>();
         response.put("sectionNumber", 8);
         response.put("patients", queue);
+
+        // Log the response
+        System.out.println("API Response for /row8: " + response);
+
         return ResponseEntity.ok(response);
     }
 
