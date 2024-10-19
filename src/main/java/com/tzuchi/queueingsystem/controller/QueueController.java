@@ -5,20 +5,21 @@ import com.tzuchi.queueingsystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
-
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class QueueController {
-    private final RegistrationStationRepository registrationStationRepository;
     private final Row2Repository row2Repository;
+    private final ObjectMapper objectMapper;
+    private final RegistrationStationRepository registrationStationRepository;
+
     private final Row5Repository row5Repository;
     private final Row6Repository row6Repository;
     private final Row8Repository row8Repository;
@@ -80,11 +81,33 @@ public class QueueController {
 
     @GetMapping("/row2")
     public ResponseEntity<?> getRow2Queue() {
-        var queue = row2Repository.findAllByInQueueTrueOrderByRegisteredTimeAsc();
-        Map<String, Object> response = new HashMap<>();
-        response.put("sectionNumber", 2);
-        response.put("patients", queue);
-        return ResponseEntity.ok(response);
+        try {
+            List<Row2> queue = row2Repository.findAllByInQueueTrueOrderByPriorityDescRegisteredTimeAsc();
+
+            List<Map<String, Object>> patientList = new ArrayList<>();
+            for (Row2 patient : queue) {
+                Map<String, Object> patientMap = new HashMap<>();
+                patientMap.put("patientId", patient.getPatientId());
+                patientMap.put("patientNumber", patient.getPatientNumber());
+                patientMap.put("patientCategory", patient.getPatientCategory());
+                patientMap.put("priority", patient.getPriorityAsString());
+                patientMap.put("registeredTime", patient.getRegisteredTime());
+                patientList.add(patientMap);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("sectionNumber", 2);
+            response.put("patients", patientList);
+
+            System.out.println("API Response for /row2: " + objectMapper.writeValueAsString(response));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "An error occurred while fetching Row 2 queue: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
 
@@ -211,7 +234,7 @@ public class QueueController {
 
     @PostMapping("/call/highest")
     public ResponseEntity<?> callHighestPriority() {
-        Row2 patient = row2Repository.findFirstByInQueueTrueOrderByPriorityDescPatientNumberAsc();
+        Row2 patient = row2Repository.findFirstByInQueueTrueOrderByPriorityAscPatientNumberAsc();
         if (patient != null) {
             return ResponseEntity.ok(patient.getPatientId());
         }
