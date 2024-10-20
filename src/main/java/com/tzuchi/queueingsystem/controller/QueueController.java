@@ -114,7 +114,7 @@ public class QueueController {
 
     @GetMapping("/row5")
     public ResponseEntity<?> getRow5Queue() {
-        List<Row5> queue = row5Repository.findAllByInQueueTrue();
+        List<Row5> queue = row5Repository.findAllSortedByPatientNumber();
         Map<String, Object> response = new HashMap<>();
         response.put("sectionNumber", 5);
         response.put("patients", queue);
@@ -142,7 +142,7 @@ public class QueueController {
             patient.setPatientId(patientId);
             patient.setPatientNumber(nextNumber);
             patient.setInQueue(true);
-            patient.setRegisteredTime(currentDateTime);
+            patient.setRegisteredTime(LocalDateTime.now());
             Row5 savedPatient = row5Repository.save(patient);
 
             // Create and save RegistrationStation
