@@ -1,5 +1,6 @@
 package com.tzuchi.queueingsystem.repository;
 
+import com.tzuchi.queueingsystem.entity.Row5;
 import com.tzuchi.queueingsystem.entity.Row6;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,5 +15,12 @@ public interface Row6Repository extends JpaRepository<Row6, String> {
     @Query("SELECT MAX(r.patientNumber) FROM Row6 r")
     Integer findMaxPatientNumber();
 
-    List<Row6> findAllByInQueueTrue();
+
+
+    @Query("SELECT r FROM Row6 r ORDER BY r.patientNumber ASC")
+    List<Row6> findAllSortedByPatientNumber();
+
+    @Query("SELECT r FROM Row6 r WHERE r.inQueue = true ORDER BY r.patientNumber ASC")
+    List<Row6> findAllByInQueueTrueOrderByPatientNumberAsc();
+
 }
