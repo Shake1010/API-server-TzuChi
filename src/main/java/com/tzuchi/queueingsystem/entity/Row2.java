@@ -14,6 +14,7 @@ public class Row2 {
     private Integer patientNumber;
     private Character patientCategory;
     private boolean inQueue;
+    private Boolean inQueueClinic;
 
     @Enumerated(EnumType.STRING)
     private Priority priority;

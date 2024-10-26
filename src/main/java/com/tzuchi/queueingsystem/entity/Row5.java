@@ -14,4 +14,5 @@ public class Row5 {
     private Integer patientNumber;  // Add this line
     private LocalDateTime registeredTime;
     private Boolean inQueue;
+    private Boolean inQueueClinic;
 }

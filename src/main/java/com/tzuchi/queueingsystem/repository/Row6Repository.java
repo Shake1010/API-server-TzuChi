@@ -23,6 +23,9 @@ public interface Row6Repository extends JpaRepository<Row6, String> {
     @Query("SELECT r FROM Row6 r WHERE r.inQueue = true ORDER BY r.patientNumber ASC")
     List<Row6> findAllByInQueueTrueOrderByPatientNumberAsc();
 
+    Row6 findFirstByInQueueClinicTrueOrderByPatientNumberAsc();
 
+    @Query("SELECT r FROM Row6 r WHERE r.inQueueClinic = true ORDER BY r.patientNumber ASC")
+    List<Row6> findAllByInQueueClinicTrueOrderByPatientNumberAsc();
 
 }
