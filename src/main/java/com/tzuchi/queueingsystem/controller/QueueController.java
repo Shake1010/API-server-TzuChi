@@ -88,10 +88,7 @@ public class QueueController {
             for (Row2 patient : queue) {
                 Map<String, Object> patientMap = new HashMap<>();
                 patientMap.put("patientId", patient.getPatientId());
-                patientMap.put("patientNumber", patient.getPatientNumber());
-                patientMap.put("patientCategory", patient.getPatientCategory());
-                patientMap.put("priority", patient.getPriorityAsString());
-                patientMap.put("registeredTime", patient.getRegisteredTime());
+                patientMap.put("inQueue", patient.isInQueue());
                 patientList.add(patientMap);
             }
 
@@ -233,23 +230,31 @@ public class QueueController {
 
     @PostMapping("/call/highest")
     public ResponseEntity<?> callHighestPriority() {
-        Row2 currentPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityAscPatientNumberAsc();
-        if (currentPatient != null) {
+        try {
+            Row2 currentPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityDescPatientNumberAsc();
+
+            if (currentPatient == null) {
+                return ResponseEntity.ok(Map.of("message", "No patients in queue"));
+            }
+
             // Set current patient's inQueue to false
             currentPatient.setInQueue(false);
             row2Repository.save(currentPatient);
 
-            // Find next patient
-            Row2 nextPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityAscPatientNumberAsc();
+            // Find next patient after updating current patient's status
+            Row2 nextPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityDescPatientNumberAsc();
 
-            // Create response with both current and next patient info
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("currentPatient", currentPatient.getPatientId());
             response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
 
             return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error calling next patient: " + e.getMessage()));
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/call/nextE")

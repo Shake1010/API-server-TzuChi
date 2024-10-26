@@ -21,4 +21,8 @@ public interface Row5Repository extends JpaRepository<Row5, String> {
 
     @Query("SELECT r FROM Row5 r WHERE r.inQueue = true ORDER BY r.patientNumber ASC")
     List<Row5> findAllByInQueueTrueOrderByPatientNumberAsc();
+
+
+
+
 }
