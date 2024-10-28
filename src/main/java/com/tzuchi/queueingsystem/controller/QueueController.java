@@ -36,7 +36,7 @@ public class QueueController {
             }
 
             switch (patient.getPatientCategory()) {
-                case 'P':
+                case 'E':
                     patient.setPriority(Row2.Priority.HIGH);
                     break;
                 case 'A':
@@ -84,7 +84,65 @@ public class QueueController {
         }
     }
 
+    @PostMapping("/register/row2-patient/clinic")
+    public ResponseEntity<?> registerRow2PatientClinic(@RequestBody Row2 patient,
+                                                       @RequestParam String date) {
+        try {
+            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
 
+            // Validate and set patient category and priority
+            if (patient.getPatientCategory() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Patient category must be provided"));
+            }
+
+            switch (patient.getPatientCategory()) {
+                case 'E':
+                    patient.setPriority(Row2.Priority.HIGH);
+                    break;
+                case 'A':
+                    patient.setPriority(Row2.Priority.MID);
+                    break;
+                case 'W':
+                    patient.setPriority(Row2.Priority.LOW);
+                    break;
+                default:
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid patient category"));
+            }
+
+            Integer maxPatientNumber = row2Repository.findMaxPatientNumberByCategory(patient.getPatientCategory());
+            int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
+            patient.setPatientNumber(nextNumber);
+
+            String patientId = String.valueOf(patient.getPatientCategory()) + nextNumber;
+            patient.setPatientId(patientId);
+
+            // Set for Clinic
+            patient.setInQueue(false);       // Not in scanning queue
+            patient.setInQueueClinic(true);  // Patient is in clinic queue
+            patient.setSectionNumber(2);
+            patient.setRegisteredTime(currentDateTime);
+
+            Row2 savedPatient = row2Repository.save(patient);
+
+            RegistrationStation registration = new RegistrationStation();
+            registration.setPatientId(patientId);
+            registration.setSectionNumber(2);
+            registration.setRegisteredTime(currentDateTime);
+            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("patientId", savedPatient.getPatientId());
+            response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+            response.put("patientNumber", savedPatient.getPatientNumber());
+            response.put("queueType", "clinic");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "An error occurred while registering the patient: " + e.getMessage()));
+        }
+    }
 
     // ... other methods
 
@@ -226,8 +284,8 @@ public class QueueController {
         }
     }
 
-    @PostMapping("/call/nextE")
-    public ResponseEntity<?> callNextE() {
+    @PostMapping("/call/nextP")
+    public ResponseEntity<?> callNextP() {
         Row5 currentPatient = row5Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
         if (currentPatient != null) {
             // Set current patient's inQueue to false
@@ -464,8 +522,8 @@ public class QueueController {
     }
 
     // Modified registration methods for other rows to include clinic queue
-    @PostMapping("/register/patientE")
-    public ResponseEntity<?> registerPatientE(@RequestParam(required = false) String date,
+    @PostMapping("/register/patientP")
+    public ResponseEntity<?> registerPatientP(@RequestParam(required = false) String date,
                                               @RequestParam(defaultValue = "false") boolean isClinic) {
         try {
             LocalDateTime currentDateTime = (date != null) ?
@@ -473,7 +531,7 @@ public class QueueController {
 
             Integer maxPatientNumber = row5Repository.findMaxPatientNumber();
             int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
-            String patientId = "E" + nextNumber;
+            String patientId = "P" + nextNumber;
 
             Row5 patient = new Row5();
             patient.setPatientId(patientId);
@@ -508,8 +566,8 @@ public class QueueController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/call/clinic/nextE")
-    public ResponseEntity<?> callClinicNextE() {
+    @PostMapping("/call/clinic/nextP")
+    public ResponseEntity<?> callClinicNextP() {
         Row5 currentPatient = row5Repository.findFirstByInQueueClinicTrueOrderByPatientNumberAsc();
         if (currentPatient != null) {
             currentPatient.setInQueueClinic(false);
