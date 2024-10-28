@@ -584,6 +584,24 @@ public class QueueController {
         return ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/call/clinic/nextD")
+    public ResponseEntity<?> callClinicNextD() {
+        Row8 currentPatient = row8Repository.findFirstByInQueueClinicTrueOrderByPatientNumberAsc();
+        if (currentPatient != null) {
+            currentPatient.setInQueueClinic(false);
+            row8Repository.save(currentPatient);
+
+            Row8 nextPatient = row8Repository.findFirstByInQueueClinicTrueOrderByPatientNumberAsc();
+
+            Map<String, String> response = new HashMap<>();
+            response.put("currentPatient", currentPatient.getPatientId());
+            response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     // Similar modifications for Row6 and Row8...
     // Add withdraw endpoints for clinic queue
     @PutMapping("/withdraw-row2-clinic")
