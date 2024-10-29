@@ -219,6 +219,7 @@ public class QueueController {
             patient.setPatientId(patientId);
             patient.setPatientNumber(nextNumber);
             patient.setInQueue(true);
+            patient.setInQueueClinic(true);  // Set this to true to enter clinic system
             patient.setRegisteredTime(currentDateTime);
             Row8 savedPatient = row8Repository.save(patient);
 
@@ -229,10 +230,10 @@ public class QueueController {
             registration.setRegisteredTime(currentDateTime);
             RegistrationStation savedRegistration = registrationStationRepository.save(registration);
 
-            // Create response object
             Map<String, Object> response = new HashMap<>();
             response.put("patientId", patientId);
             response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+            response.put("patientNumber", savedPatient.getPatientNumber());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -523,30 +524,37 @@ public class QueueController {
 
     // Modified registration methods for other rows to include clinic queue
     @PostMapping("/register/patientP")
-    public ResponseEntity<?> registerPatientP(@RequestParam(required = false) String date,
-                                              @RequestParam(defaultValue = "false") boolean isClinic) {
+    public ResponseEntity<?> registerPatientP(@RequestParam String date) {
         try {
-            LocalDateTime currentDateTime = (date != null) ?
-                    LocalDateTime.parse(date + "T00:00:00") : LocalDateTime.now();
+            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
 
+            // Get the next patient number
             Integer maxPatientNumber = row5Repository.findMaxPatientNumber();
             int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
+
+            // Create patient ID
             String patientId = "P" + nextNumber;
 
+            // Create and save Row5 patient
             Row5 patient = new Row5();
             patient.setPatientId(patientId);
             patient.setPatientNumber(nextNumber);
             patient.setInQueue(true);
-            patient.setInQueueClinic(isClinic);
-            patient.setRegisteredTime(LocalDateTime.now());
+            patient.setInQueueClinic(true);  // Set this to true to enter clinic system
+            patient.setRegisteredTime(currentDateTime);
             Row5 savedPatient = row5Repository.save(patient);
 
-            // ... existing registration station logic ...
+            // Create and save RegistrationStation
+            RegistrationStation registration = new RegistrationStation();
+            registration.setPatientId(patientId);
+            registration.setSectionNumber(5);
+            registration.setRegisteredTime(currentDateTime);
+            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("patientId", patientId);
-            response.put("registeredSequence", nextNumber);
-            response.put("isClinic", isClinic);
+            response.put("patientId", savedPatient.getPatientId());
+            response.put("registeredSequence", savedRegistration.getRegisteredSequence());
+            response.put("patientNumber", savedPatient.getPatientNumber());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -559,11 +567,52 @@ public class QueueController {
     // Add new clinic queue endpoints for other rows
     @GetMapping("/row5/clinic")
     public ResponseEntity<?> getRow5ClinicQueue() {
-        List<Row5> queue = row5Repository.findAllByInQueueClinicTrueOrderByPatientNumberAsc();
-        Map<String, Object> response = new HashMap<>();
-        response.put("sectionNumber", 5);
-        response.put("patients", queue);
-        return ResponseEntity.ok(response);
+        try {
+            List<Row5> queue = row5Repository.findAllClinicOrderByPatientNumberAsc();
+
+            List<Map<String, Object>> patientList = new ArrayList<>();
+            for (Row5 patient : queue) {
+                Map<String, Object> patientMap = new HashMap<>();
+                patientMap.put("patientId", patient.getPatientId());
+                patientMap.put("inQueueClinic", patient.getInQueueClinic());
+                patientList.add(patientMap);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("sectionNumber", 5);
+            response.put("patients", patientList);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error fetching clinic queue: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/row8/clinic")
+    public ResponseEntity<?> getRow8ClinicQueue() {
+        try {
+            List<Row8> queue = row8Repository.findAllClinicOrderByPatientNumberAsc();
+
+            List<Map<String, Object>> patientList = new ArrayList<>();
+            for (Row8 patient : queue) {
+                Map<String, Object> patientMap = new HashMap<>();
+                patientMap.put("patientId", patient.getPatientId());
+                patientMap.put("inQueueClinic", patient.getInQueueClinic());
+                patientList.add(patientMap);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("sectionNumber", 8);
+            response.put("patients", patientList);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error fetching clinic queue: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/call/clinic/nextP")

@@ -14,8 +14,6 @@ public interface Row5Repository extends JpaRepository<Row5, String> {
     @Query("SELECT COALESCE(MAX(r.patientNumber), 0) FROM Row5 r")
     Integer findMaxPatientNumber();
 
-
-
     @Query("SELECT r FROM Row5 r ORDER BY r.patientNumber ASC")
     List<Row5> findAllSortedByPatientNumber();
 
@@ -25,7 +23,5 @@ public interface Row5Repository extends JpaRepository<Row5, String> {
     Row5 findFirstByInQueueClinicTrueOrderByPatientNumberAsc();
 
     @Query("SELECT r FROM Row5 r WHERE r.inQueueClinic = true ORDER BY r.patientNumber ASC")
-    List<Row5> findAllByInQueueClinicTrueOrderByPatientNumberAsc();
-
-
+    List<Row5> findAllClinicOrderByPatientNumberAsc();
 }

@@ -15,18 +15,14 @@ public interface Row8Repository extends JpaRepository<Row8, String> {
     @Query("SELECT MAX(r.patientNumber) FROM Row8 r")
     Integer findMaxPatientNumber();
 
-
-
     @Query("SELECT r FROM Row8 r ORDER BY r.patientNumber ASC")
     List<Row8> findAllSortedByPatientNumber();
 
     @Query("SELECT r FROM Row8 r WHERE r.inQueue = true ORDER BY r.patientNumber ASC")
     List<Row8> findAllByInQueueTrueOrderByPatientNumberAsc();
 
-
     Row8 findFirstByInQueueClinicTrueOrderByPatientNumberAsc();
 
     @Query("SELECT r FROM Row8 r WHERE r.inQueueClinic = true ORDER BY r.patientNumber ASC")
-    List<Row8> findAllByInQueueClinicTrueOrderByPatientNumberAsc();
-
+    List<Row8> findAllClinicOrderByPatientNumberAsc();
 }
