@@ -391,85 +391,134 @@ public class QueueController {
     }
     @PutMapping("/withdraw-row2")
     public ResponseEntity<?> withdrawRow2(@RequestParam String patientId) {
-        Row2 patient = row2Repository.findById(patientId).orElse(null);
-        if (patient != null) {
-            // Mark the current patient as not in queue
-            patient.setInQueue(false);
-            row2Repository.save(patient);
+        try {
+            Row2 patient = row2Repository.findById(patientId).orElse(null);
+            if (patient != null) {
+                // Find all patients with higher patient numbers
+                List<Row2> allPatientsInOrder = row2Repository.findAllOrderByPriorityDescPatientNumberAsc();
 
-            // Get next patient in queue
-            Row2 nextPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityAscPatientNumberAsc();
+                // Set all patients back to inQueue=true
+                for (Row2 queuedPatient : allPatientsInOrder) {
+                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
+                        queuedPatient.setInQueue(true);
+                        row2Repository.save(queuedPatient);
+                    }
+                }
 
-            Map<String, String> response = new HashMap<>();
-            response.put("withdrawnPatient", patientId);
-            response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+                // Get the next patient in queue after restoration
+                Row2 nextPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityDescPatientNumberAsc();
 
-            return ResponseEntity.ok(response);
+                Map<String, String> response = new HashMap<>();
+                response.put("withdrawnPatient", patientId);
+                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error withdrawing patient: " + e.getMessage()));
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/withdraw-row5")
     public ResponseEntity<?> withdrawRow5(@RequestParam String patientId) {
-        Row5 patient = row5Repository.findById(patientId).orElse(null);
-        if (patient != null) {
-            // Mark the current patient as not in queue
-            patient.setInQueue(false);
-            row5Repository.save(patient);
+        try {
+            Row5 patient = row5Repository.findById(patientId).orElse(null);
+            if (patient != null) {
+                // Find all patients with higher patient numbers
+                List<Row5> allPatientsInOrder = row5Repository.findAllSortedByPatientNumber();
 
-            // Get next patient in queue
-            List<Row5> queuedPatients = row5Repository.findAllByInQueueTrueOrderByPatientNumberAsc();
-            String nextPatientId = !queuedPatients.isEmpty() ? queuedPatients.get(0).getPatientId() : "";
+                // Set all patients back to inQueue=true
+                for (Row5 queuedPatient : allPatientsInOrder) {
+                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
+                        queuedPatient.setInQueue(true);
+                        row5Repository.save(queuedPatient);
+                    }
+                }
 
-            Map<String, String> response = new HashMap<>();
-            response.put("withdrawnPatient", patientId);
-            response.put("nextPatient", nextPatientId);
+                // Get the next patient in queue after restoration
+                Row5 nextPatient = row5Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
 
-            return ResponseEntity.ok(response);
+                Map<String, String> response = new HashMap<>();
+                response.put("withdrawnPatient", patientId);
+                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error withdrawing patient: " + e.getMessage()));
         }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PutMapping("/withdraw-row8")
-    public ResponseEntity<?> withdrawRow8(@RequestParam String patientId) {
-        Row8 patient = row8Repository.findById(patientId).orElse(null);
-        if (patient != null) {
-            // Mark the current patient as not in queue
-            patient.setInQueue(false);
-            row8Repository.save(patient);
-
-            // Get next patient in queue
-            List<Row8> queuedPatients = row8Repository.findAllByInQueueTrueOrderByPatientNumberAsc();
-            String nextPatientId = !queuedPatients.isEmpty() ? queuedPatients.get(0).getPatientId() : "";
-
-            Map<String, String> response = new HashMap<>();
-            response.put("withdrawnPatient", patientId);
-            response.put("nextPatient", nextPatientId);
-
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/withdraw-row6")
     public ResponseEntity<?> withdrawRow6(@RequestParam String patientId) {
-        Row6 patient = row6Repository.findById(patientId).orElse(null);
-        if (patient != null) {
-            // Mark the current patient as not in queue
-            patient.setInQueue(false);
-            row6Repository.save(patient);
+        try {
+            Row6 patient = row6Repository.findById(patientId).orElse(null);
+            if (patient != null) {
+                // Find all patients with higher patient numbers
+                List<Row6> allPatientsInOrder = row6Repository.findAllSortedByPatientNumber();
 
-            // Get next patient in queue
-            List<Row6> queuedPatients = row6Repository.findAllByInQueueTrueOrderByPatientNumberAsc();
-            String nextPatientId = !queuedPatients.isEmpty() ? queuedPatients.get(0).getPatientId() : "";
+                // Set all patients back to inQueue=true
+                for (Row6 queuedPatient : allPatientsInOrder) {
+                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
+                        queuedPatient.setInQueue(true);
+                        row6Repository.save(queuedPatient);
+                    }
+                }
 
-            Map<String, String> response = new HashMap<>();
-            response.put("withdrawnPatient", patientId);
-            response.put("nextPatient", nextPatientId);
+                // Get the next patient in queue after restoration
+                Row6 nextPatient = row6Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
 
-            return ResponseEntity.ok(response);
+                Map<String, String> response = new HashMap<>();
+                response.put("withdrawnPatient", patientId);
+                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error withdrawing patient: " + e.getMessage()));
         }
-        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/withdraw-row8")
+    public ResponseEntity<?> withdrawRow8(@RequestParam String patientId) {
+        try {
+            Row8 patient = row8Repository.findById(patientId).orElse(null);
+            if (patient != null) {
+                // Find all patients with higher patient numbers
+                List<Row8> allPatientsInOrder = row8Repository.findAllSortedByPatientNumber();
+
+                // Set all patients back to inQueue=true
+                for (Row8 queuedPatient : allPatientsInOrder) {
+                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
+                        queuedPatient.setInQueue(true);
+                        row8Repository.save(queuedPatient);
+                    }
+                }
+
+                // Get the next patient in queue after restoration
+                Row8 nextPatient = row8Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
+
+                Map<String, String> response = new HashMap<>();
+                response.put("withdrawnPatient", patientId);
+                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error withdrawing patient: " + e.getMessage()));
+        }
     }
     @GetMapping("/row2/clinic")
     public ResponseEntity<?> getRow2ClinicQueue() {

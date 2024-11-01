@@ -25,4 +25,7 @@ public interface Row8Repository extends JpaRepository<Row8, String> {
 
     @Query("SELECT r FROM Row8 r WHERE r.inQueueClinic = true ORDER BY r.patientNumber ASC")
     List<Row8> findAllClinicOrderByPatientNumberAsc();
+
+    @Query("SELECT r FROM Row8 r WHERE r.inQueue = true ORDER BY r.patientNumber ASC LIMIT 1")
+    Row8 findFirstInQueue();
 }
