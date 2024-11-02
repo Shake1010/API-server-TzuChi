@@ -703,4 +703,63 @@ public class QueueController {
         }
         return ResponseEntity.notFound().build();
     }
+    @PutMapping("/withdraw/row5/clinic")
+    public ResponseEntity<?> withdrawRow5Clinic(@RequestParam String patientId) {
+        try {
+            // Find all patients not in clinic queue (called patients)
+            List<Row5> calledPatients = row5Repository.findAll().stream()
+                    .filter(p -> !p.getInQueueClinic())
+                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
+                    .toList();
+
+            if (!calledPatients.isEmpty()) {
+                // Get the patient with the highest number
+                Row5 patientToReturn = calledPatients.get(0);
+                patientToReturn.setInQueueClinic(true);
+                row5Repository.save(patientToReturn);
+
+                Map<String, String> response = new HashMap<>();
+                response.put("withdrawnPatient", patientToReturn.getPatientId());
+                response.put("message", "Patient successfully returned to clinic queue");
+
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error withdrawing patient from clinic: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/withdraw/row8/clinic")
+    public ResponseEntity<?> withdrawRow8Clinic(@RequestParam String patientId) {
+        try {
+            // Find all patients not in clinic queue (called patients)
+            List<Row8> calledPatients = row8Repository.findAll().stream()
+                    .filter(p -> !p.getInQueueClinic())
+                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
+                    .toList();
+
+            if (!calledPatients.isEmpty()) {
+                // Get the patient with the highest number
+                Row8 patientToReturn = calledPatients.get(0);
+                patientToReturn.setInQueueClinic(true);
+                row8Repository.save(patientToReturn);
+
+                Map<String, String> response = new HashMap<>();
+                response.put("withdrawnPatient", patientToReturn.getPatientId());
+                response.put("message", "Patient successfully returned to clinic queue");
+
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error withdrawing patient from clinic: " + e.getMessage()));
+        }
+    }
+
+
 }
