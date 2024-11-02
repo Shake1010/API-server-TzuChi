@@ -392,25 +392,21 @@ public class QueueController {
     @PutMapping("/withdraw-row2")
     public ResponseEntity<?> withdrawRow2(@RequestParam String patientId) {
         try {
-            Row2 patient = row2Repository.findById(patientId).orElse(null);
-            if (patient != null) {
-                // Find all patients with higher patient numbers
-                List<Row2> allPatientsInOrder = row2Repository.findAllOrderByPriorityDescPatientNumberAsc();
+            // Find all patients not in queue (called patients)
+            List<Row2> calledPatients = row2Repository.findAll().stream()
+                    .filter(p -> !p.isInQueue())
+                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
+                    .toList();
 
-                // Set all patients back to inQueue=true
-                for (Row2 queuedPatient : allPatientsInOrder) {
-                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
-                        queuedPatient.setInQueue(true);
-                        row2Repository.save(queuedPatient);
-                    }
-                }
-
-                // Get the next patient in queue after restoration
-                Row2 nextPatient = row2Repository.findFirstByInQueueTrueOrderByPriorityDescPatientNumberAsc();
+            if (!calledPatients.isEmpty()) {
+                // Get the patient with the highest number
+                Row2 patientToReturn = calledPatients.get(0);
+                patientToReturn.setInQueue(true);
+                row2Repository.save(patientToReturn);
 
                 Map<String, String> response = new HashMap<>();
-                response.put("withdrawnPatient", patientId);
-                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+                response.put("withdrawnPatient", patientToReturn.getPatientId());
+                response.put("message", "Patient successfully returned to queue");
 
                 return ResponseEntity.ok(response);
             }
@@ -425,25 +421,21 @@ public class QueueController {
     @PutMapping("/withdraw-row5")
     public ResponseEntity<?> withdrawRow5(@RequestParam String patientId) {
         try {
-            Row5 patient = row5Repository.findById(patientId).orElse(null);
-            if (patient != null) {
-                // Find all patients with higher patient numbers
-                List<Row5> allPatientsInOrder = row5Repository.findAllSortedByPatientNumber();
+            // Find all patients not in queue (called patients)
+            List<Row5> calledPatients = row5Repository.findAll().stream()
+                    .filter(p -> !p.getInQueue())
+                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
+                    .toList();
 
-                // Set all patients back to inQueue=true
-                for (Row5 queuedPatient : allPatientsInOrder) {
-                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
-                        queuedPatient.setInQueue(true);
-                        row5Repository.save(queuedPatient);
-                    }
-                }
-
-                // Get the next patient in queue after restoration
-                Row5 nextPatient = row5Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
+            if (!calledPatients.isEmpty()) {
+                // Get the patient with the highest number
+                Row5 patientToReturn = calledPatients.get(0);
+                patientToReturn.setInQueue(true);
+                row5Repository.save(patientToReturn);
 
                 Map<String, String> response = new HashMap<>();
-                response.put("withdrawnPatient", patientId);
-                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+                response.put("withdrawnPatient", patientToReturn.getPatientId());
+                response.put("message", "Patient successfully returned to queue");
 
                 return ResponseEntity.ok(response);
             }
@@ -458,25 +450,21 @@ public class QueueController {
     @PutMapping("/withdraw-row6")
     public ResponseEntity<?> withdrawRow6(@RequestParam String patientId) {
         try {
-            Row6 patient = row6Repository.findById(patientId).orElse(null);
-            if (patient != null) {
-                // Find all patients with higher patient numbers
-                List<Row6> allPatientsInOrder = row6Repository.findAllSortedByPatientNumber();
+            // Find all patients not in queue (called patients)
+            List<Row6> calledPatients = row6Repository.findAll().stream()
+                    .filter(p -> !p.getInQueue())
+                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
+                    .toList();
 
-                // Set all patients back to inQueue=true
-                for (Row6 queuedPatient : allPatientsInOrder) {
-                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
-                        queuedPatient.setInQueue(true);
-                        row6Repository.save(queuedPatient);
-                    }
-                }
-
-                // Get the next patient in queue after restoration
-                Row6 nextPatient = row6Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
+            if (!calledPatients.isEmpty()) {
+                // Get the patient with the highest number
+                Row6 patientToReturn = calledPatients.get(0);
+                patientToReturn.setInQueue(true);
+                row6Repository.save(patientToReturn);
 
                 Map<String, String> response = new HashMap<>();
-                response.put("withdrawnPatient", patientId);
-                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+                response.put("withdrawnPatient", patientToReturn.getPatientId());
+                response.put("message", "Patient successfully returned to queue");
 
                 return ResponseEntity.ok(response);
             }
@@ -491,25 +479,21 @@ public class QueueController {
     @PutMapping("/withdraw-row8")
     public ResponseEntity<?> withdrawRow8(@RequestParam String patientId) {
         try {
-            Row8 patient = row8Repository.findById(patientId).orElse(null);
-            if (patient != null) {
-                // Find all patients with higher patient numbers
-                List<Row8> allPatientsInOrder = row8Repository.findAllSortedByPatientNumber();
+            // Find all patients not in queue (called patients)
+            List<Row8> calledPatients = row8Repository.findAll().stream()
+                    .filter(p -> !p.getInQueue())
+                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
+                    .toList();
 
-                // Set all patients back to inQueue=true
-                for (Row8 queuedPatient : allPatientsInOrder) {
-                    if (queuedPatient.getPatientNumber() >= patient.getPatientNumber()) {
-                        queuedPatient.setInQueue(true);
-                        row8Repository.save(queuedPatient);
-                    }
-                }
-
-                // Get the next patient in queue after restoration
-                Row8 nextPatient = row8Repository.findFirstByInQueueTrueOrderByPatientNumberAsc();
+            if (!calledPatients.isEmpty()) {
+                // Get the patient with the highest number
+                Row8 patientToReturn = calledPatients.get(0);
+                patientToReturn.setInQueue(true);
+                row8Repository.save(patientToReturn);
 
                 Map<String, String> response = new HashMap<>();
-                response.put("withdrawnPatient", patientId);
-                response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+                response.put("withdrawnPatient", patientToReturn.getPatientId());
+                response.put("message", "Patient successfully returned to queue");
 
                 return ResponseEntity.ok(response);
             }
