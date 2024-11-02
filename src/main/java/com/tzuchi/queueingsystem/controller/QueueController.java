@@ -28,7 +28,7 @@ public class QueueController {
     public ResponseEntity<?> registerRow2PatientScanning(@RequestBody Row2 patient,
                                                          @RequestParam String date) {
         try {
-            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime currentDateTime = LocalDateTime.now();
 
             // Validate and set patient category and priority
             if (patient.getPatientCategory() == null) {
@@ -88,7 +88,7 @@ public class QueueController {
     public ResponseEntity<?> registerRow2PatientClinic(@RequestBody Row2 patient,
                                                        @RequestParam String date) {
         try {
-            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime currentDateTime = LocalDateTime.now();
 
             // Validate and set patient category and priority
             if (patient.getPatientCategory() == null) {
@@ -205,7 +205,7 @@ public class QueueController {
     @PostMapping("/register/patientD")
     public ResponseEntity<?> registerPatientD(@RequestParam String date) {
         try {
-            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime currentDateTime = LocalDateTime.now();
 
             // Get the next patient number
             Integer maxPatientNumber = row8Repository.findMaxPatientNumber();
@@ -267,6 +267,7 @@ public class QueueController {
 
             // Set current patient's inQueue to false
             currentPatient.setInQueue(false);
+            currentPatient.setCalledClinicTime(LocalDateTime.now());
             row2Repository.save(currentPatient);
 
             // Find next patient after updating current patient's status
@@ -348,7 +349,7 @@ public class QueueController {
     @PostMapping("/register/patientB")
     public ResponseEntity<?> registerPatientB(@RequestParam String date) {
         try {
-            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime currentDateTime = LocalDateTime.now();
 
             // Get the next patient number
             Integer maxPatientNumber = row6Repository.findMaxPatientNumber();
@@ -392,29 +393,44 @@ public class QueueController {
     @PutMapping("/withdraw-row2")
     public ResponseEntity<?> withdrawRow2(@RequestParam String patientId) {
         try {
-            // Find all patients not in queue (called patients)
-            List<Row2> calledPatients = row2Repository.findAll().stream()
-                    .filter(p -> !p.isInQueue())
-                    .sorted((a, b) -> b.getPatientNumber() - a.getPatientNumber()) // Sort by patient number descending
-                    .toList();
+            // Use the new repository method to find the latest called patient
+            Row2 patientToReturn = row2Repository.findLatestCalledPatient();
 
-            if (!calledPatients.isEmpty()) {
-                // Get the patient with the highest number
-                Row2 patientToReturn = calledPatients.get(0);
-                patientToReturn.setInQueue(true);
-                row2Repository.save(patientToReturn);
-
-                Map<String, String> response = new HashMap<>();
-                response.put("withdrawnPatient", patientToReturn.getPatientId());
-                response.put("message", "Patient successfully returned to queue");
-
-                return ResponseEntity.ok(response);
+            if (patientToReturn == null) {
+                // Return a non-null response when no patient is found
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "No called patients found"));
             }
-            return ResponseEntity.notFound().build();
+
+            // Update patient status
+            patientToReturn.setInQueue(true);
+            patientToReturn.setCalledClinicTime(null); // Reset the call time when returning to queue
+            row2Repository.save(patientToReturn);
+
+            // Create response map with null checks
+            Map<String, Object> patientDetails = new HashMap<>();
+            patientDetails.put("patientId", patientToReturn.getPatientId());
+            patientDetails.put("patientNumber", patientToReturn.getPatientNumber());
+            patientDetails.put("priority", patientToReturn.getPriorityAsString());
+            patientDetails.put("category", patientToReturn.getPatientCategory());
+            patientDetails.put("previousCallTime",
+                    patientToReturn.getCalledClinicTime() != null ?
+                            patientToReturn.getCalledClinicTime().toString() : null);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("withdrawnPatient", patientDetails);
+            response.put("message", "Latest called patient successfully returned to queue");
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             e.printStackTrace();
+            // Use HashMap instead of Map.of() for better null handling
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error withdrawing patient: " +
+                    (e.getMessage() != null ? e.getMessage() : "Unknown error"));
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Error withdrawing patient: " + e.getMessage()));
+                    .body(errorResponse);
         }
     }
 
@@ -559,7 +575,7 @@ public class QueueController {
     @PostMapping("/register/patientP")
     public ResponseEntity<?> registerPatientP(@RequestParam String date) {
         try {
-            LocalDateTime currentDateTime = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime currentDateTime = LocalDateTime.now();
 
             // Get the next patient number
             Integer maxPatientNumber = row5Repository.findMaxPatientNumber();

@@ -40,4 +40,6 @@ public class Row2 {
     public String getPriorityAsString() {
         return priority != null ? priority.name() : "UNKNOWN";
     }
+    @Column(name = "called_clinic_time")
+    private LocalDateTime calledClinicTime;
 }
