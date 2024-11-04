@@ -42,4 +42,7 @@ public class Row2 {
     }
     @Column(name = "called_clinic_time")
     private LocalDateTime calledClinicTime;
+
+    @Column(name = "called_scanning_time")
+    private LocalDateTime calledScanningTime;
 }

@@ -56,6 +56,12 @@ public interface Row2Repository extends JpaRepository<Row2, String> {
             "ORDER BY r.called_clinic_time DESC LIMIT 1", nativeQuery = true)
     Row2 findLatestCalledPatient();
 
+    @Query(value = "SELECT * FROM row2 r WHERE r.in_queue_clinic = false " +
+            "AND r.called_scanning_time IS NOT NULL " +
+            "ORDER BY r.called_scanning_time DESC LIMIT 1", nativeQuery = true)
+    Row2 findLatestCalledPatientClinic();
+
+
 
 
 

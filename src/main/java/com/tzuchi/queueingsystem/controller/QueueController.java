@@ -84,65 +84,7 @@ public class QueueController {
         }
     }
 
-    @PostMapping("/register/row2-patient/clinic")
-    public ResponseEntity<?> registerRow2PatientClinic(@RequestBody Row2 patient,
-                                                       @RequestParam String date) {
-        try {
-            LocalDateTime currentDateTime = LocalDateTime.now();
 
-            // Validate and set patient category and priority
-            if (patient.getPatientCategory() == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Patient category must be provided"));
-            }
-
-            switch (patient.getPatientCategory()) {
-                case 'E':
-                    patient.setPriority(Row2.Priority.HIGH);
-                    break;
-                case 'A':
-                    patient.setPriority(Row2.Priority.MID);
-                    break;
-                case 'W':
-                    patient.setPriority(Row2.Priority.LOW);
-                    break;
-                default:
-                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid patient category"));
-            }
-
-            Integer maxPatientNumber = row2Repository.findMaxPatientNumberByCategory(patient.getPatientCategory());
-            int nextNumber = (maxPatientNumber != null) ? maxPatientNumber + 1 : 1;
-            patient.setPatientNumber(nextNumber);
-
-            String patientId = String.valueOf(patient.getPatientCategory()) + nextNumber;
-            patient.setPatientId(patientId);
-
-            // Set for Clinic
-            patient.setInQueue(false);       // Not in scanning queue
-            patient.setInQueueClinic(true);  // Patient is in clinic queue
-            patient.setSectionNumber(2);
-            patient.setRegisteredTime(currentDateTime);
-
-            Row2 savedPatient = row2Repository.save(patient);
-
-            RegistrationStation registration = new RegistrationStation();
-            registration.setPatientId(patientId);
-            registration.setSectionNumber(2);
-            registration.setRegisteredTime(currentDateTime);
-            RegistrationStation savedRegistration = registrationStationRepository.save(registration);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("patientId", savedPatient.getPatientId());
-            response.put("registeredSequence", savedRegistration.getRegisteredSequence());
-            response.put("patientNumber", savedPatient.getPatientNumber());
-            response.put("queueType", "clinic");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "An error occurred while registering the patient: " + e.getMessage()));
-        }
-    }
 
     // ... other methods
 
@@ -555,7 +497,9 @@ public class QueueController {
             }
 
             currentPatient.setInQueueClinic(false);
+            currentPatient.setCalledScanningTime(LocalDateTime.now());
             row2Repository.save(currentPatient);
+
 
             Row2 nextPatient = row2Repository.findFirstByInQueueClinicTrueOrderByPriorityDescPatientNumberAsc();
 
@@ -702,22 +646,48 @@ public class QueueController {
 
     // Similar modifications for Row6 and Row8...
     // Add withdraw endpoints for clinic queue
-    @PutMapping("/withdraw-row2-clinic")
+    @PutMapping("/withdraw/row2/clinic")
     public ResponseEntity<?> withdrawRow2Clinic(@RequestParam String patientId) {
-        Row2 patient = row2Repository.findById(patientId).orElse(null);
-        if (patient != null) {
-            patient.setInQueueClinic(false);
-            row2Repository.save(patient);
+        try {
+            // Use the repository method to find the latest called patient
+            Row2 patientToReturn = row2Repository.findLatestCalledPatientClinic();
 
-            Row2 nextPatient = row2Repository.findFirstByInQueueClinicTrueOrderByPriorityAscPatientNumberAsc();
+            if (patientToReturn == null) {
+                // Return a non-null response when no patient is found
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("message", "No called patients found"));
+            }
 
-            Map<String, String> response = new HashMap<>();
-            response.put("withdrawnPatient", patientId);
-            response.put("nextPatient", nextPatient != null ? nextPatient.getPatientId() : "");
+            // Update patient status
+            patientToReturn.setInQueueClinic(true);
+            patientToReturn.setCalledScanningTime(null); // Reset the scanning call time when returning to queue
+            row2Repository.save(patientToReturn);
+
+            // Create response map with null checks
+            Map<String, Object> patientDetails = new HashMap<>();
+            patientDetails.put("patientId", patientToReturn.getPatientId());
+            patientDetails.put("patientNumber", patientToReturn.getPatientNumber());
+            patientDetails.put("priority", patientToReturn.getPriorityAsString());
+            patientDetails.put("category", patientToReturn.getPatientCategory());
+            patientDetails.put("previousScanningCallTime",
+                    patientToReturn.getCalledScanningTime() != null ?
+                            patientToReturn.getCalledScanningTime().toString() : null);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("withdrawnPatient", patientDetails);
+            response.put("message", "Latest called patient successfully returned to scanning queue");
 
             return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Use HashMap instead of Map.of() for better null handling
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error withdrawing patient from scanning: " +
+                    (e.getMessage() != null ? e.getMessage() : "Unknown error"));
+            return ResponseEntity.internalServerError()
+                    .body(errorResponse);
         }
-        return ResponseEntity.notFound().build();
     }
     @PutMapping("/withdraw/row5/clinic")
     public ResponseEntity<?> withdrawRow5Clinic(@RequestParam String patientId) {
