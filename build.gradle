@@ -2,6 +2,7 @@ plugins {
     id 'org.springframework.boot' version '3.2.3'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java'
+    id 'war'  // Add war plugin
 }
 
 group = 'com.tzuchi'
@@ -16,10 +17,19 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'  // Add this line
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // Add provided runtime for embedded server
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+war {
+    enabled = true
+    archiveFileName = "TzuChiQueuingSystem.war"
 }
 
 test {
